@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "trading-automation"
+version = "0.1.0"
+description = ""
+authors = ["Vikas"]
+readme = "README.md"
+packages = [{include = "trading_automation"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+py5paisa = "^0.7.13"
+pyotp = "^2.9.0"
+python-dotenv = "^1.0.1"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

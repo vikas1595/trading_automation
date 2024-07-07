@@ -1,0 +1,40 @@
+import xlwings as xw
+
+from py5paisa import FivePaisaClient
+wb = xw.Book('5paisatrade.xlsm')
+credential = wb.sheets['credential']
+FIVEPAISAAPP_NAME = credential.range('B1').value
+FIVEPAISAAPP_SOURCE = credential.range('B2').value
+FIVEPAISAUSER_ID = credential.range('B3').value
+FIVEPAISAPASSWORD = credential.range('B4').value
+FIVEPAISAUSER_KEY = credential.range('B5').value
+FIVEPAISAENCRYPTION_KEY = credential.range('B6').value
+cred = {
+    "APP_NAME": FIVEPAISAAPP_NAME,
+    "APP_SOURCE": FIVEPAISAAPP_SOURCE,
+    "USER_ID": FIVEPAISAUSER_ID,
+    "PASSWORD": FIVEPAISAPASSWORD,
+    "USER_KEY": FIVEPAISAUSER_KEY,
+    "ENCRYPTION_KEY": FIVEPAISAENCRYPTION_KEY
+}
+payload = {
+    "head": {
+        "key": FIVEPAISAUSER_KEY
+    },
+    "body": {
+        "Exchange": "N",
+        "ExchangeType": "C",  # Assuming this is constant or fetched from Excel
+        "ScripCode": "1660",  # Assuming symbol is fetched from Excel
+        "Price": "445",  # Example hardcoded value; replace with actual logic
+        "StopLossPrice": "0",  # Example hardcoded value; replace with actual logic
+        "OrderType": "Buy",  # Assuming ordertype is fetched from Excel
+        "Qty": "1",  # Assuming quantity is fetched from Excel
+        "DisQty": "0",
+        "IsIntraday": "true",
+        "iOrderValidity": "0",
+        "AHPlaced": "N"
+    }
+}
+client = FivePaisaClient()
+client.login(cred['USER_ID'], cred['PASSWORD'], cred['USER_KEY'], cred['APP_NAME'], cred['APP_SOURCE'], cred['ENCRYPTION_KEY'])
+response = client.place_order(payload)
