@@ -6,3 +6,5 @@
 
 */*.log
 src/.env
+*db.db
+*.log
