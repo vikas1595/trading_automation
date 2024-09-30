@@ -50,6 +50,6 @@ def process_trades(file_path):
     # Update the Excel file with the specific cell updates
     update_excel(file_path, updates)
 
-# Example usage
-file_path = './5paisatrade_new.xlsm'
-process_trades(file_path)
+# # Example usage
+# file_path = './5paisatrade_new.xlsm'
+# process_trades(file_path)
