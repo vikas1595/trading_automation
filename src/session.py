@@ -33,9 +33,6 @@ def get_fivepaisa_client():
                        
     return client
 
-def create_session():
-    
-    client=create_session()
     
 
 

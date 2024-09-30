@@ -1,36 +1,6 @@
 import pandas as pd
 import xlwings as xw
-
-def readexcel(filepath:str,sheet_name:str):
-    dtypes={
-        "segment":str,
-        "option_price":int,
-        "strike_price":int,
-        "Type":str,
-        "EXP date":str,
-        "Scriptcode":str,
-        "combined":str,
-        "Sr No": int,
-        "Symbol":str,
-        "Ltp":float,
-        "Qty":int,
-        "Entry Signal":bool,
-        "Exit Signal":bool,
-        "Entry":str,
-        "ExchOrderID":str,
-        "Entry Price":float,
-        "Stop Loss": float,
-        "Target":float,
-        "Exit":bool,
-        "Exit Price":float,
-        "Manual Exit":bool,
-        "Cover Points": str
-
-    }
-
-    pdf=pd.read_excel(filepath,sheet_name,header=0).dropna(subset=["Entry Signal"])
-    pdf=pdf.astype(dtypes)
-    return pdf
+from exceldata import readexcel
 
 def place_order(symbol, qty):
     # This is a mock function to simulate placing an order with the broker.
@@ -45,8 +15,8 @@ def update_excel(file_path, updates):
     sheet = wb.sheets.active
     for update in updates:
         row = update['row']
-        exch_order_id = update['ExchOrderID']
-        entry_price = update['Entry Price']
+        exch_order_id = update['exchorderid']
+        entry_price = update['entry_price']
         
         sheet.range(f'O{row}').value = exch_order_id  # Update ExchOrderID column (15th column, O)
         sheet.range(f'P{row}').value = entry_price    # Update Entry Price column (16th column, P)
@@ -59,21 +29,22 @@ def update_excel(file_path, updates):
 def process_trades(file_path):
     df = readexcel(file_path,sheet_name="Trade")
     # Filter records with Entry Signal TRUE
-    entry_signal_df = df[df["Entry Signal"]] 
+    entry_signal_df = df[df["entry_signal"]] 
 
     updates = []
 
     # Loop through the filtered records and place orders
     for index, row in entry_signal_df.iterrows():
-        symbol = row['Symbol']
-        qty = row['Qty']
+        symbol = row['symbol']
+        qty = row['qty']
         exch_order_id, entry_price = place_order(symbol, qty)
         
         # Append the updates for each row
         updates.append({
             'row': index + 2,  # Excel rows are 1-indexed, and there's a header row
-            'ExchOrderID': exch_order_id,
-            'Entry Price': entry_price
+            'exchorderid': exch_order_id,
+            'entry_price': entry_price,
+            "entry_signal":False
         })
     
     # Update the Excel file with the specific cell updates
