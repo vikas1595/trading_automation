@@ -14,6 +14,6 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.addHandler(streamHandler)
 
 # Set up the logger
-def get_logger(logger_name:str)->'Logger':
+def get_logger(logger_name:str)->'logging.Logger':
     setup_logger(logger_name, f'{logger_name}.log')
     return logging.getLogger(f'{logger_name}')

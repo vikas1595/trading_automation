@@ -1,87 +1,157 @@
 import os
+import random
 import requests
 from session import get_fivepaisa_client
-def place_order(user_key, access_token, order_type, exchange, exchange_type, 
-                scrip_code, qty, price=0, stop_loss_price=None, 
-                dis_qty=None, is_intraday=True, ah_placed='N', remote_order_id=None):
-    url = "https://Openapi.5paisa.com/VendorsAPI/Service1.svc/V1/PlaceOrderRequest"
-    
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"bearer {access_token}"
-    }
-    
-#     payload = {
-# 	"head": {
-# 		"key": "IEmwWeCtDyhbmMUXBq4XWPX383rvnk7m",
-# 		"Key": "IEmwWeCtDyhbmMUXBq4XWPX383rvnk7m"
-# 	},
-# 	"body": {
-# 		"RequestToken": f"{access_token}",
-# 		"EncryKey": "6VfIc2NT8DW5Iiw3UfuLwNvbTjkSyeDx",
-# 		"UserId": "FIggoLnCIkK",
-# 		"OrderType": "B",
-# 		"ScripCode": 59178,
-# 		"Qty": 30,
-# 		"Price": 0,
-# 		"Exchange": "N",
-# 		"ExchangeType": "D",
-# 		"AHPlaced": "Y"
-# 	}
-# }
-    payload=  {
-        "head": {
-            "key": f"{user_key}",
-            "Key": f"{user_key}"
-        },
-        "body": {
-            "RequestToken": f"{access_token}",
-            "EncryKey": "6VfIc2NT8DW5Iiw3UfuLwNvbTjkSyeDx",
-		    "UserId": "FIggoLnCIkK",
-            "OrderType": "B",
-            "Exchange": exchange,
-            "ExchangeType": exchange_type,
-            "ScripCode": scrip_code,
-            "Price": price,
-            "Qty": qty,
-            "AHPlaced": ah_placed
+from py5paisa import FivePaisaClient
+
+
+class order:
+    def __init__(
+        self,
+        client: FivePaisaClient,
+        order_type: str,
+        scrip_code: str,
+        qty: int,
+        price: float,
+        ah_placed,
+    ):
+        self.client = client
+        self.token = client.get_access_token()
+        self.order_type = order_type
+        self.exchange = "N"
+        self.exchange_type = "C"
+        self.scrip_code = scrip_code
+        self.qty = qty
+        self.price = price
+        self.is_intraday = True
+        self.ah_placed = ah_placed
+        self.user_key = os.getenv("USER_KEY")
+        self.user_id = os.getenv("USER_ID")
+        self.encryption_key = os.getenv("ENCRYPTION_KEY")
+        self.client_code = os.getenv("CLIENT_CODE")
+
+    def place_order(self, remote_order_id):
+        url = "https://Openapi.5paisa.com/VendorsAPI/Service1.svc/V1/PlaceOrderRequest"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"bearer {self.token}",
         }
-    }
-    
-    # {
-    # "head": {
-    #     "key": "{{Your App Key}}"
-    # },
-    # "body": {
-    #     "Exchange":"N",
-    #     "ExchangeType":"C",
-    #     "ScripCode":"1660",
-    #     "Price": "445",
-    #     "StopLossPrice": "0",
-    #     "OrderType": "Buy",
-    #     "Qty": 1,
-    #     "DisQty": "0",
-    #     "IsIntraday": True,
-    #     "iOrderValidity": "0",
-    #     "AHPlaced":"N"
-#     # }
-# }
-# {'body': {'BrokerOrderID': 168401497, 'ClientCode': '53200425', 'Exch': 'N', 'ExchOrderID': '0', 
-# 'ExchType': 'D', 'LocalOrderID': 0, 'Message': 'Success', 'RMSResponseCode': 1, 'RemoteOrderID': '', 'ScripCode': 59178, 'Status': 0, 'Time': '/Date(1727634600000+0530)/'},
-#   'head': {'responseCode': '5PPlaceOrdReqV1', 'status': '0', 'statusDescription': 'Success'}}
-    response = requests.post(url, json=payload, headers=headers)
-    
-    if response.status_code == 200:
+
+        payload = {
+            "head": {"key": self.user_key, "Key": self.user_key},
+            "body": {
+                "RequestToken": self.token,
+                "EncryKey": self.encryption_key,
+                "UserId": self.user_id,
+                "OrderType": self.order_type,
+                "Exchange": self.exchange,
+                "ExchangeType": self.exchange_type,
+                "ScripCode": self.scrip_code,
+                "Price": self.price,
+                "Qty": self.qty,
+                "AHPlaced": self.ah_placed,
+                "RemoteOrderID": remote_order_id,
+            },
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            response.raise_for_status()
+
+    def get_exch_order_id(self, order_id, user_key):
+        payload = {
+            "head": {"key": f"{self.user_key}", "Key": f"{self.user_key}" },
+            "body": {
+                "ClientCode": self.client_code,
+                "OrdStatusReqList": [{"Exch": "N", "RemoteOrderID": order_id}],
+            },
+        }
+        
+        url = "https://Openapi.5paisa.com/VendorsAPI/Service1.svc/V2/OrderStatus"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"bearer {self.token}",
+        }
+        response = requests.post(url, json=payload, headers=headers)
         return response.json()
-    else:
-        response.raise_for_status()
 
-# Example usage:
-client = get_fivepaisa_client()
 
-result = place_order(user_key=os.getenv('USER_KEY'), access_token=client.get_access_token(),
-                      order_type="B", exchange="N", 
-                      exchange_type="C", scrip_code="59178",
-                          qty=15
-                        ,ah_placed="Y", remote_order_id="123456")
-print(result)
+# def place_order(
+#     order_type,
+#     exchange,
+#     exchange_type,
+#     scrip_code,
+#     qty,
+#     remote_order_id,
+#     price=0,
+#     is_intraday=True,
+#     ah_placed="N",
+# ):
+#     url = "https://Openapi.5paisa.com/VendorsAPI/Service1.svc/V1/PlaceOrderRequest"
+
+#     headers = {
+#         "Content-Type": "application/json",
+#         "Authorization": f"bearer {client.get_access_token()}",
+#     }
+
+#     payload = {
+#         "head": {"key": os.getenv("USER_KEY"), "Key": os.getenv("USER_KEY")},
+#         "body": {
+#             "RequestToken": client.get_access_token(),
+#             "EncryKey": os.getenv("ENCRYPTION_KEY"),
+#             "UserId": os.getenv("USER_ID"),
+#             "OrderType": order_type,
+#             "Exchange": exchange,
+#             "ExchangeType": exchange_type,
+#             "ScripCode": scrip_code,
+#             "Price": price,
+#             "Qty": qty,
+#             "AHPlaced": ah_placed,
+#             "RemoteOrderID": remote_order_id,
+#         },
+#     }
+
+#     response = requests.post(url, json=payload, headers=headers)
+
+#     if response.status_code == 200:
+#         return response.json()
+#     else:
+#         response.raise_for_status()
+
+
+# def get_exch_order_id(client, order_id, user_key):
+#     payload = {
+#         "head": {"key": f"{user_key}", "Key": f"{user_key}"},
+#         "body": {
+#             "ClientCode": os.getenv("CLIENT_CODE"),
+#             "OrdStatusReqList": [{"Exch": "N", "RemoteOrderID": order_id}],
+#         },
+#     }
+#     url = "https://Openapi.5paisa.com/VendorsAPI/Service1.svc/V2/OrderStatus"
+#     headers = {
+#         "Content-Type": "application/json",
+#         "Authorization": f"bearer {client.get_access_token()}",
+#     }
+#     response = requests.post(url, json=payload, headers=headers)
+#     return response.json()
+
+
+# client = get_fivepaisa_client()
+
+# result = place_order(
+#     order_type="B",
+#     exchange="N",
+#     exchange_type="C",
+#     scrip_code="25756",
+#     price=2.67,
+#     qty=1,
+#     remote_order_id="123456",
+#     ah_placed="Y",
+# )
+# # get exchnageorderid
+# order_status = get_exch_order_id(client, 123456, os.getenv("USER_KEY"))
+# print(order_status)
