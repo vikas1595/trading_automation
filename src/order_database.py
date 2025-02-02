@@ -3,7 +3,7 @@ import sqlite3
 class OrderDatabase:
     def __init__(self, db_name='orders.db'):
         self.conn = sqlite3.connect(db_name)
-        self.create_table()
+        # self.create_table()
 
     def create_table(self):
         with self.conn:
