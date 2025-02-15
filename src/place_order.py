@@ -3,9 +3,9 @@ import os
 import random
 import requests
 import sqlite3
-from session import session
+from src.login import Session
 from dataclasses import dataclass
-from order_database import OrderDatabase
+from src.order_database import OrderDatabase
 
 
 @dataclass
@@ -20,10 +20,12 @@ class Order:
     is_intraday: bool | None = True
     remote_order_id: int = random.randint(100000, 999999)
     stop_loss_price: float | None = None
+    broker_order_id: str | None = None
+    last_trade_price: float | None = None
 
 
 class OrderExecutor:
-    def __init__(self, session: session, order: Order):
+    def __init__(self, session: Session, order: Order):
         self.session = session
         self.order = order
 
@@ -36,11 +38,11 @@ class OrderExecutor:
         }
 
         payload = {
-            "head": {"key": self.session.USER_KEY, "Key": self.session.USER_KEY},
+            "head": {"key": self.session.current_user.USER_KEY, "Key": self.session.current_user.USER_KEY},
             "body": {
                 "RequestToken": self.session.access_token,
-                "EncryKey": self.session.ENCRYPTION_KEY,
-                "UserId": self.session.USER_ID,
+                "EncryKey": self.session.current_user.ENCRYPTION_KEY,
+                "UserId": self.session.current_user.USER_ID,
                 "OrderType": self.order.order_type,
                 "Exchange": self.order.exchange,
                 "ExchangeType": self.order.exchange_type,
@@ -69,11 +71,11 @@ class OrderExecutor:
     def order_status(self):
         payload = {
             "head": {
-                "key": f"{self.session.USER_KEY}",
-                "Key": f"{self.session.USER_KEY}",
+                "key": f"{self.session.current_user.USER_KEY}",
+                "Key": f"{self.session.current_user.USER_KEY}",
             },
             "body": {
-                "ClientCode": self.session.CLIENT_CODE,
+                "ClientCode": self.session.current_user.CLIENT_CODE,
                 "OrdStatusReqList": [
                     {"Exch": "N", "RemoteOrderID": self.order.remote_order_id}
                 ],
@@ -96,7 +98,7 @@ class OrderExecutor:
         }
         payload = {
             "head": {
-                "key": f"{self.session.USER_KEY}",
+                "key": f"{self.session.current_user.USER_KEY}",
             },
             "body": {
                 "MarketFeedData": [
@@ -122,23 +124,23 @@ class OrderExecutor:
             print(f"HTTP Error: {response.status_code}")
 
 
-current_session = session()
-test_order = Order(order_type="B", scrip_code="25756", qty=1, price=2.67, ah_placed="Y")
-order_executor = OrderExecutor(current_session, test_order)
+# current_session = session()
+# test_order = Order(order_type="B", scrip_code="25756", qty=1, price=0, ah_placed="Y")
+# order_executor = OrderExecutor(current_session, test_order)
 
-# Fetch LastRate using get_market_feed
-market_feed = order_executor.get_market_feed()
-if not market_feed:
-    raise Exception("Failed to fetch market feed data")
+# # Fetch LastRate using get_market_feed
+# market_feed = order_executor.get_market_feed()
+# if not market_feed:
+#     raise Exception("Failed to fetch market feed data")
 
-last_rate = market_feed[0].get("LastRate")
-stop_loss_price = last_rate - 30
+# last_rate = market_feed[0].get("LastRate")
+# stop_loss_price = last_rate - 30
 
-# Update order with stop loss price
-test_order.stop_loss_price = stop_loss_price
+# # Update order with stop loss price
+# test_order.stop_loss_price = stop_loss_price
 
-# Place stop loss buy order
-order_executor.place()
+# # Place stop loss buy order
+# order_executor.place()
 
 # # Fetch ExchangeOrderId using order_status
 # order_status_response = order_executor.order_status()

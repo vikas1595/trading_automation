@@ -1,4 +1,4 @@
-from src.session import get_fivepaisa_client
+from src.login import get_fivepaisa_client
 
 if __name__=='__main__':
     client=get_fivepaisa_client()
